@@ -1,30 +1,33 @@
 import spacy
+from transformers import AutoModelForCausalLM, AutoTokenizer, pipeline
 
+# Load spaCy model
 nlp = spacy.load('en_core_web_sm')
 
-from transformers import pipeline
-
-# Load pre-trained conversational model
+# Load DialoGPT model and tokenizer
 print("Loading chatbot model...")
 try:
-    chatbot = pipeline("conversational", model="microsoft/DialoGPT-medium")
+    model = AutoModelForCausalLM.from_pretrained("microsoft/DialoGPT-medium")
+    tokenizer = AutoTokenizer.from_pretrained("microsoft/DialoGPT-medium")
+    chatbot = pipeline("text-generation", model=model, tokenizer=tokenizer)
     print("Chatbot model loaded.")
 except Exception as e:
     print(f"Failed to load chatbot model: {e}")
-    chatbot = None
+    model, tokenizer, chatbot = None, None, None
 
 def chatbot_response(user_input):
-    print(f"User input: {user_input}")
     if chatbot is None:
         return "Chatbot model is not available."
     try:
-        response = chatbot(user_input)
-        print(f"Chatbot response: {response}")
-        return response[0]['generated_text']
+        # Generating a response with the chatbot
+        input_ids = tokenizer.encode(user_input + tokenizer.eos_token, return_tensors='pt')
+        chat_history_ids = model.generate(input_ids, max_length=1000, pad_token_id=tokenizer.eos_token_id)
+        chatbot_response = tokenizer.decode(chat_history_ids[:, input_ids.shape[-1]:][0], skip_special_tokens=True)
+        return chatbot_response
     except Exception as e:
         print(f"Error generating response: {e}")
         return "Sorry, I couldn't process that."
-    
+
 # Looping the chat
 while True:
     user_input = input("You: ")
