@@ -2,6 +2,7 @@ import spacy
 from transformers import AutoModelForCausalLM, AutoTokenizer, pipeline
 import torch
 import sympy as sp
+import re
 
 # Load spaCy model
 nlp = spacy.load('en_core_web_sm')
@@ -25,8 +26,8 @@ def solve_math_expression(expression):
         # Use sympy to parse and solve the math expression
         result = sp.sympify(expression)
         return str(result)
-    except:
-        return "Sorry, I couldn't understand that."
+    except Exception as e:
+        return f"Error in math computation: {e}"
 
 def update_memory(user_input, bot_response):
     # Save user inputs and bot responses to memory
@@ -36,11 +37,18 @@ def retrieve_memory(user_input):
     # Retrieve information from memory
     return memory.get(user_input, None)
 
+def extract_math_expression(user_input):
+    # Use regular expression to find math expressions
+    match = re.search(r'(\d+[\+\-\*\/]\d+)', user_input)
+    if match:
+        return match.group(0)
+    return None
+
 def chatbot_response(user_input):
-    # Check if user input is a math expression
-    if any(char.isdigit() for char in user_input):
-        if "+" in user_input or "-" in user_input or "*" in user_input or "/" in user_input:
-            return solve_math_expression(user_input)
+    # Extract and solve math expression if present
+    math_expression = extract_math_expression(user_input)
+    if math_expression:
+        return solve_math_expression(math_expression)
 
     if chatbot is None:
         return "Chatbot model is not available."
