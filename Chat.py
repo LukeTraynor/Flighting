@@ -3,6 +3,8 @@ from transformers import AutoModelForCausalLM, AutoTokenizer, pipeline
 import torch
 import sympy as sp
 import re
+import json
+import os
 
 # Load spaCy model
 nlp = spacy.load('en_core_web_sm')
@@ -19,7 +21,19 @@ except Exception as e:
     model, tokenizer, chatbot = None, None, None
 
 # Memory storage
-memory = {}
+memory_file = 'memory.json'
+
+def load_memory():
+    if os.path.exists(memory_file):
+        with open(memory_file, 'r') as file:
+            return json.load(file)
+    return {}
+
+def save_memory():
+    with open(memory_file, 'w') as file:
+        json.dump(memory, file)
+
+memory = load_memory()
 
 def solve_math_expression(expression):
     try:
@@ -32,6 +46,7 @@ def solve_math_expression(expression):
 def update_memory(user_input, bot_response):
     # Save user inputs and bot responses to memory
     memory[user_input] = bot_response
+    save_memory()
 
 def retrieve_memory(user_input):
     # Retrieve information from memory
