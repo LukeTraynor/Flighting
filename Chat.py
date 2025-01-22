@@ -1,5 +1,6 @@
 import spacy
 from transformers import AutoModelForCausalLM, AutoTokenizer, pipeline
+import torch
 
 # Load spaCy model
 nlp = spacy.load('en_core_web_sm')
@@ -19,9 +20,17 @@ def chatbot_response(user_input):
     if chatbot is None:
         return "Chatbot model is not available."
     try:
-        # Generating a response with the chatbot
+        # Encoding the user input with attention_mask
         input_ids = tokenizer.encode(user_input + tokenizer.eos_token, return_tensors='pt')
-        chat_history_ids = model.generate(input_ids, max_length=1000, pad_token_id=tokenizer.eos_token_id)
+        
+        # Create attention mask (1 for actual tokens, 0 for padding tokens)
+        attention_mask = torch.ones(input_ids.shape, dtype=torch.long)  # Create a tensor of ones
+        attention_mask[input_ids == tokenizer.pad_token_id] = 0  # Set padding tokens to 0
+
+        # Generating a response with the chatbot
+        chat_history_ids = model.generate(input_ids, attention_mask=attention_mask, max_length=1000, pad_token_id=tokenizer.eos_token_id)
+        
+        # Decode the response
         chatbot_response = tokenizer.decode(chat_history_ids[:, input_ids.shape[-1]:][0], skip_special_tokens=True)
         return chatbot_response
     except Exception as e:
