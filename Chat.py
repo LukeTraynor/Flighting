@@ -1,6 +1,7 @@
 import spacy
 from transformers import AutoModelForCausalLM, AutoTokenizer, pipeline
 import torch
+import sympy as sp
 
 # Load spaCy model
 nlp = spacy.load('en_core_web_sm')
@@ -16,10 +17,39 @@ except Exception as e:
     print(f"Failed to load chatbot model: {e}")
     model, tokenizer, chatbot = None, None, None
 
+# Memory storage
+memory = {}
+
+def solve_math_expression(expression):
+    try:
+        # Use sympy to parse and solve the math expression
+        result = sp.sympify(expression)
+        return str(result)
+    except:
+        return "Sorry, I couldn't understand that."
+
+def update_memory(user_input, bot_response):
+    # Save user inputs and bot responses to memory
+    memory[user_input] = bot_response
+
+def retrieve_memory(user_input):
+    # Retrieve information from memory
+    return memory.get(user_input, None)
+
 def chatbot_response(user_input):
+    # Check if user input is a math expression
+    if any(char.isdigit() for char in user_input):
+        if "+" in user_input or "-" in user_input or "*" in user_input or "/" in user_input:
+            return solve_math_expression(user_input)
+
     if chatbot is None:
         return "Chatbot model is not available."
     try:
+        # Check if input already exists in memory
+        remembered_answer = retrieve_memory(user_input)
+        if remembered_answer:
+            return f"I remember you asked that before: {remembered_answer}"
+
         # Encoding the user input with attention_mask
         input_ids = tokenizer.encode(user_input + tokenizer.eos_token, return_tensors='pt')
         
@@ -32,6 +62,10 @@ def chatbot_response(user_input):
         
         # Decode the response
         chatbot_response = tokenizer.decode(chat_history_ids[:, input_ids.shape[-1]:][0], skip_special_tokens=True)
+        
+        # Store the response in memory
+        update_memory(user_input, chatbot_response)
+        
         return chatbot_response
     except Exception as e:
         print(f"Error generating response: {e}")
