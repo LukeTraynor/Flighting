@@ -2,18 +2,14 @@ import spacy
 
 nlp = spacy.load('en_core_web_sm')
 
+from transformers import pipeline
+
+# Loading ai responses instead of pre built
+chatbot = pipeline("conversational", model="microsoft/DialoGPT-medium")
+
 def chatbot_response(user_input):
-    doc = nlp(user_input)
-    
-    # Basic Response
-    if 'hello' in user_input.lower() or 'hi' in user_input.lower():
-        return "Hello! How can I assist you today?"
-    elif 'how are you' in user_input.lower():
-        return "I'm just a bot, but I'm doing well. How about you?"
-    elif 'bye' in user_input.lower():
-        return "Goodbye! Have a great day!"
-    else:
-        return "Sorry, I didn't understand that. Could you rephrase?"
+    response = chatbot(user_input)
+    return response[0]['generated_text']
 
 # Looping the chat
 while True:
