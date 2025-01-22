@@ -26,7 +26,12 @@ memory_file = 'memory.json'
 def load_memory():
     if os.path.exists(memory_file):
         with open(memory_file, 'r') as file:
-            return json.load(file)
+            try:
+                content = file.read().strip()
+                if content:
+                    return json.loads(content)
+            except json.JSONDecodeError:
+                return {}
     return {}
 
 def save_memory():
