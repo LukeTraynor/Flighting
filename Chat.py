@@ -37,9 +37,19 @@ def retrieve_memory(user_input):
     # Retrieve information from memory
     return memory.get(user_input, None)
 
+def replace_words_with_symbols(expression):
+    expression = expression.lower()
+    expression = expression.replace("plus", "+")
+    expression = expression.replace("minus", "-")
+    expression = expression.replace("times", "*")
+    expression = expression.replace("divided by", "/")
+    return expression
+
 def extract_math_expression(user_input):
+    # Replace words with symbols
+    user_input = replace_words_with_symbols(user_input)
     # Use regular expression to find math expressions
-    match = re.search(r'(\d+[\+\-\*\/]\d+)', user_input)
+    match = re.search(r'(\d+(\s*[\+\-\*\/]\s*\d+)+)', user_input)
     if match:
         return match.group(0)
     return None
