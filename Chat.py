@@ -1,3 +1,4 @@
+import requests
 import spacy
 from transformers import AutoModelForCausalLM, AutoTokenizer, pipeline
 import torch
@@ -48,14 +49,14 @@ def solve_math_expression(expression):
     except Exception as e:
         return f"Error in math computation: {e}"
 
-def update_memory(user_input, bot_response):
-    # Save user inputs and bot responses to memory
-    memory[user_input] = bot_response
+def update_memory(key, value):
+    # Save key-value pairs to memory
+    memory[key] = value
     save_memory()
 
-def retrieve_memory(user_input):
+def retrieve_memory(key):
     # Retrieve information from memory
-    return memory.get(user_input, None)
+    return memory.get(key, None)
 
 def replace_words_with_symbols(expression):
     expression = expression.lower()
@@ -74,6 +75,17 @@ def extract_math_expression(user_input):
         return match.group(0)
     return None
 
+def get_search_results(query):
+    """Get search results from an API."""
+    url = f'https://api.duckduckgo.com/?q={query}&format=json'
+    response = requests.get(url)
+    data = response.json()
+    
+    # Check if an abstract text is available
+    if 'AbstractText' in data and data['AbstractText']:
+        return data['AbstractText']
+    return "Sorry, I couldn't find an answer to that."
+
 def chatbot_response(user_input):
     # Extract and solve math expression if present
     math_expression = extract_math_expression(user_input)
@@ -83,10 +95,45 @@ def chatbot_response(user_input):
     if chatbot is None:
         return "Chatbot model is not available."
     try:
-        # Check if input already exists in memory
-        remembered_answer = retrieve_memory(user_input)
-        if remembered_answer:
-            return f"I remember you asked that before: {remembered_answer}"
+        # Check for specific information requests
+        if "my name" in user_input.lower():
+            name = retrieve_memory("name")
+            if name:
+                return f"Your name is {name}."
+            else:
+                return "I don't know your name yet. What is your name?"
+
+        # Check if the user is providing their name
+        if "my name is" in user_input.lower():
+            name = user_input.split("my name is")[-1].strip()
+            update_memory("name", name)
+            return f"Nice to meet you, {name}!"
+
+        # Check for other types of information
+        if "remember" in user_input.lower():
+            parts = user_input.split("remember")
+            if len(parts) > 1:
+                info = parts[1].strip()
+                key_value = info.split("is")
+                if len(key_value) == 2:
+                    key = key_value[0].strip()
+                    value = key_value[1].strip()
+                    update_memory(key, value)
+                    return f"Got it! I'll remember that {key} is {value}."
+
+        # Check if the user is asking for remembered information
+        if "what is" in user_input.lower():
+            key = user_input.split("what is")[-1].strip()
+            value = retrieve_memory(key)
+            if value:
+                return f"{key} is {value}."
+            else:
+                return f"I don't know what {key} is yet."
+
+        # Check if the user is asking a factual question
+        if "search for" in user_input.lower():
+            query = user_input.split("search for")[-1].strip()
+            return get_search_results(query)
 
         # Encoding the user input with attention_mask
         input_ids = tokenizer.encode(user_input + tokenizer.eos_token, return_tensors='pt')
@@ -100,9 +147,6 @@ def chatbot_response(user_input):
         
         # Decode the response
         chatbot_response = tokenizer.decode(chat_history_ids[:, input_ids.shape[-1]:][0], skip_special_tokens=True)
-        
-        # Store the response in memory
-        update_memory(user_input, chatbot_response)
         
         return chatbot_response
     except Exception as e:
