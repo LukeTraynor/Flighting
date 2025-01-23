@@ -102,7 +102,13 @@ def get_search_results(query):
     
     # Check if search results are available
     if 'items' in data:
-        return data['items'][0]['snippet']
+        results = []
+        for item in data['items'][:3]:  # Get the top 3 results
+            title = item.get('title')
+            snippet = item.get('snippet')
+            link = item.get('link')
+            results.append(f"{title}\n{snippet}\n{link}\n")
+        return "\n\n".join(results)
     return "Sorry, I couldn't find an answer to that."
 
 def chatbot_response(user_input):
