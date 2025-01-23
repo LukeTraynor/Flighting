@@ -95,6 +95,12 @@ def chatbot_response(user_input):
     if chatbot is None:
         return "Chatbot model is not available."
     try:
+        # Check if the user is providing their name
+        if "my name is" in user_input.lower():
+            name = user_input.split("my name is")[-1].strip()
+            update_memory("name", name)
+            return f"Nice to meet you, {name}!"
+
         # Check for specific information requests
         if "my name" in user_input.lower():
             name = retrieve_memory("name")
@@ -102,12 +108,6 @@ def chatbot_response(user_input):
                 return f"Your name is {name}."
             else:
                 return "I don't know your name yet. What is your name?"
-
-        # Check if the user is providing their name
-        if "my name is" in user_input.lower():
-            name = user_input.split("my name is")[-1].strip()
-            update_memory("name", name)
-            return f"Nice to meet you, {name}!"
 
         # Check for other types of information
         if "remember" in user_input.lower():
