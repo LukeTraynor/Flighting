@@ -111,6 +111,15 @@ def get_search_results(query):
         return "\n\n".join(results)
     return "Sorry, I couldn't find an answer to that."
 
+def parse_query_with_spacy(user_input):
+    """Parse the user input with spaCy to extract the search query."""
+    doc = nlp(user_input)
+    query = []
+    for token in doc:
+        if token.pos_ in ['NOUN', 'PROPN', 'VERB', 'ADJ']:
+            query.append(token.text)
+    return ' '.join(query)
+
 def chatbot_response(user_input):
     # Extract and solve math expression if present
     math_expression = extract_math_expression(user_input)
@@ -129,7 +138,7 @@ def chatbot_response(user_input):
             return response
 
         # Check for specific information requests
-        if "my name" in user_input.lower():
+        if "my name" in user_input.lower() and "is" not in user_input.lower():
             name = retrieve_memory("name")
             if name:
                 response = f"Your name is {name}."
@@ -153,7 +162,7 @@ def chatbot_response(user_input):
                     return response
 
         # Check if the user is asking for remembered information
-        if "what is" in user_input.lower():
+        if "what is" in user_input.lower() and "search for" not in user_input.lower():
             key = user_input.split("what is")[-1].strip()
             value = retrieve_memory(key)
             if value:
@@ -164,9 +173,9 @@ def chatbot_response(user_input):
             return response
 
         # Check if the user is asking a factual question
-        search_phrases = ["search for", "find", "look up", "who is", "what is", "tell me about"]
+        search_phrases = ["search for", "find", "look up", "who is", "tell me about"]
         if any(phrase in user_input.lower() for phrase in search_phrases):
-            query = re.sub('|'.join(search_phrases), '', user_input, flags=re.IGNORECASE).strip()
+            query = parse_query_with_spacy(user_input)
             response = get_search_results(query)
             log_response(user_input, response)
             return response
