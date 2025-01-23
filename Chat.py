@@ -76,14 +76,16 @@ def extract_math_expression(user_input):
     return None
 
 def get_search_results(query):
-    """Get search results from an API."""
-    url = f'https://api.duckduckgo.com/?q={query}&format=json'
+    """Get search results from Google Custom Search API."""
+    api_key = 'AIzaSyD4Vq5MwT_A11M88x1Wpn-4qJkboJKev3E'
+    search_engine_id = 'c0c21f9a67e4e4474'
+    url = f'https://www.googleapis.com/customsearch/v1?q={query}&key={api_key}&cx={search_engine_id}'
     response = requests.get(url)
     data = response.json()
     
-    # Check if an abstract text is available
-    if 'AbstractText' in data and data['AbstractText']:
-        return data['AbstractText']
+    # Check if search results are available
+    if 'items' in data:
+        return data['items'][0]['snippet']
     return "Sorry, I couldn't find an answer to that."
 
 def chatbot_response(user_input):
