@@ -94,14 +94,20 @@ def extract_math_expression(user_input):
 
 summarizer = pipeline("summarization", model="facebook/bart-large-cnn", framework="pt")
 
+
+
 def get_search_results(query):
     """Get search results from Google Custom Search API and summarize."""
-    api_key = 'AIzaSyDg3raBDHsYYgzUt96U40z-x5EL502CTLs'
-    search_engine_id = 'c0c21f9a67e4e4474'
+    api_key = ('AIzaSyDg3raBDHsYYgzUt96U40z-x5EL502CTLs')
+    search_engine_id = ('c0c21f9a67e4e4474')
+    if not api_key or not search_engine_id:
+        return "API key or search engine ID is not set."
+    
     url = f'https://www.googleapis.com/customsearch/v1?q={query}&key={api_key}&cx={search_engine_id}'
     
     try:
         response = requests.get(url)
+        response.raise_for_status()  # Raise an HTTPError for bad responses
         data = response.json()
         
         # Check if search results are available
@@ -121,9 +127,9 @@ def get_search_results(query):
                 return summary[0]['summary_text']
         
         return "Sorry, I couldn't find a summary for that."
-    except Exception as e:
+    except requests.exceptions.RequestException as e:
         return f"An error occurred while searching: {e}"
-    
+
 def parse_query_with_spacy(user_input):
     """Parse the user input with spaCy to extract the search query."""
     doc = nlp(user_input)
