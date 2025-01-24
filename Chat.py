@@ -6,6 +6,7 @@ import sympy as sp
 import re
 import json
 import os
+from googletrans import Translator
 
 # Load spaCy model
 nlp = spacy.load('en_core_web_sm')
@@ -139,6 +140,16 @@ def parse_query_with_spacy(user_input):
             query.append(token.text)
     return ' '.join(query)
 
+translator = Translator()
+
+def translate_text(text, target_language):
+    """Translate text to the target language using googletrans."""
+    try:
+        translated = translator.translate(text, dest=target_language)
+        return translated.text
+    except Exception as e:
+        return f"An error occurred while translating: {e}"
+
 def chatbot_response(user_input):
     # Extract and solve math expression if present
     math_expression = extract_math_expression(user_input)
@@ -198,6 +209,18 @@ def chatbot_response(user_input):
             response = get_search_results(query)
             log_response(user_input, response)
             return response
+
+        # Check if the user is asking for translation
+        if "translate" in user_input.lower():
+            parts = user_input.split("translate")
+            if len(parts) > 1:
+                text_and_language = parts[1].strip().split("to")
+                if len(text_and_language) == 2:
+                    text = text_and_language[0].strip()
+                    target_language = text_and_language[1].strip()
+                    response = translate_text(text, target_language)
+                    log_response(user_input, response)
+                    return response
 
         # Encoding the user input with attention_mask
         input_ids = tokenizer.encode(user_input + tokenizer.eos_token, return_tensors='pt')
