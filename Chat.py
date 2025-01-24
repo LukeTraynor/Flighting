@@ -92,25 +92,38 @@ def extract_math_expression(user_input):
         return match.group(0)
     return None
 
+summarizer = pipeline("summarization", model="facebook/bart-large-cnn", framework="pt")
+
 def get_search_results(query):
-    """Get search results from Google Custom Search API."""
+    """Get search results from Google Custom Search API and summarize."""
     api_key = 'AIzaSyDg3raBDHsYYgzUt96U40z-x5EL502CTLs'
     search_engine_id = 'c0c21f9a67e4e4474'
     url = f'https://www.googleapis.com/customsearch/v1?q={query}&key={api_key}&cx={search_engine_id}'
-    response = requests.get(url)
-    data = response.json()
     
-    # Check if search results are available
-    if 'items' in data:
-        results = []
-        for item in data['items'][:3]:  # Get the top 3 results
-            title = item.get('title')
-            snippet = item.get('snippet')
-            link = item.get('link')
-            results.append(f"{title}\n{snippet}\n{link}\n")
-        return "\n\n".join(results)
-    return "Sorry, I couldn't find an answer to that."
-
+    try:
+        response = requests.get(url)
+        data = response.json()
+        
+        # Check if search results are available
+        if 'items' in data:
+            snippets = []
+            for item in data['items'][:5]:  # Get the top 5 results
+                snippet = item.get('snippet', '')
+                if snippet:
+                    snippets.append(snippet)
+            
+            # Combine snippets into one text
+            combined_text = " ".join(snippets)
+            
+            # Summarize the combined text
+            if combined_text:
+                summary = summarizer(combined_text, max_length=100, min_length=30, do_sample=False)
+                return summary[0]['summary_text']
+        
+        return "Sorry, I couldn't find a summary for that."
+    except Exception as e:
+        return f"An error occurred while searching: {e}"
+    
 def parse_query_with_spacy(user_input):
     """Parse the user input with spaCy to extract the search query."""
     doc = nlp(user_input)

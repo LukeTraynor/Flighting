@@ -1,5 +1,5 @@
 Starting code
-Active environment : source venv/bin/activate
+Active environment : source myenv/bin/activate
 
 Potential Additions :
 
