@@ -6,7 +6,7 @@ import sympy as sp
 import re
 import json
 import os
-from googletrans import Translator
+from translate import Translator
 
 # Load spaCy model
 nlp = spacy.load('en_core_web_sm')
@@ -140,13 +140,12 @@ def parse_query_with_spacy(user_input):
             query.append(token.text)
     return ' '.join(query)
 
-translator = Translator()
-
 def translate_text(text, target_language):
-    """Translate text to the target language using googletrans."""
+    """Translate text to the target language using the translate library."""
     try:
-        translated = translator.translate(text, dest=target_language)
-        return translated.text
+        translator = Translator(to_lang=target_language)
+        translated = translator.translate(text)
+        return translated
     except Exception as e:
         return f"An error occurred while translating: {e}"
 

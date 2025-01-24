@@ -9,3 +9,6 @@ Potential Additions :
 -- Translations into different languages
 -- GPS directions between two locations
 -- GUI screen for the AI
+
+pip uninstall googletrans
+pip install googletrans==4.0.0-rc1
