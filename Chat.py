@@ -6,7 +6,8 @@ import sympy as sp
 import re
 import json
 import os
-from translate import Translator
+from deep_translator import GoogleTranslator
+print("deep_translator is installed and available.")
 
 # Load spaCy model
 nlp = spacy.load('en_core_web_sm')
@@ -99,8 +100,8 @@ summarizer = pipeline("summarization", model="facebook/bart-large-cnn", framewor
 
 def get_search_results(query):
     """Get search results from Google Custom Search API and summarize."""
-    api_key = ('AIzaSyDg3raBDHsYYgzUt96U40z-x5EL502CTLs')
-    search_engine_id = ('c0c21f9a67e4e4474')
+    api_key = os.getenv('AIzaSyDg3raBDHsYYgzUt96U40z-x5EL502CTLs')
+    search_engine_id = os.getenv('c0c21f9a67e4e4474')
     if not api_key or not search_engine_id:
         return "API key or search engine ID is not set."
     
@@ -141,10 +142,9 @@ def parse_query_with_spacy(user_input):
     return ' '.join(query)
 
 def translate_text(text, target_language):
-    """Translate text to the target language using the translate library."""
+    """Translate text to the target language using deep_translator."""
     try:
-        translator = Translator(to_lang=target_language)
-        translated = translator.translate(text)
+        translated = GoogleTranslator(source='auto', target=target_language).translate(text)
         return translated
     except Exception as e:
         return f"An error occurred while translating: {e}"
