@@ -7,7 +7,6 @@ import re
 import json
 import os
 from deep_translator import GoogleTranslator
-print("deep_translator is installed and available.")
 
 # Load spaCy model
 nlp = spacy.load('en_core_web_sm')

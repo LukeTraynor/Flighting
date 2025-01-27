@@ -1,3 +1,4 @@
 # Ignore virtual environment
 myenv/
 venv/
+test_deep_translator.py
