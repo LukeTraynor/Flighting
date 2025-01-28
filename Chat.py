@@ -244,18 +244,23 @@ def chatbot_response(user_input):
         log_response(user_input, response)
         return response
 
-# GUI setup
 def send_message(event=None):
     user_input = user_entry.get()
     if user_input.lower() == 'exit':
         root.quit()
     elif not user_input.strip():
+        chat_display.config(state=tk.NORMAL)  # Enable text widget
         chat_display.insert(tk.END, "Bot: Please enter something.\n")
+        chat_display.config(state=tk.DISABLED)  # Disable text widget
     else:
-        chat_display.insert(tk.END, f"You: {user_input}\n")
+        chat_display.config(state=tk.NORMAL)  # Enable text widget
+        chat_display.insert(tk.END, f"You: {user_input}\n", "user_message")
         response = chatbot_response(user_input)
         chat_display.insert(tk.END, f"Bot: {response}\n")
+        chat_display.config(state=tk.DISABLED)  # Disable text widget
+        chat_display.see(tk.END)  # Auto-scroll to the latest message
         user_entry.delete(0, tk.END)
+
 
 
 root = tk.Tk()
