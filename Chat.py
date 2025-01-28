@@ -8,7 +8,7 @@ import json
 import os
 from deep_translator import GoogleTranslator
 import tkinter as tk
-from tkinter import scrolledtext
+from tkinter import ttk, scrolledtext
 
 # Load spaCy model
 nlp = spacy.load('en_core_web_sm')
@@ -257,17 +257,30 @@ def send_message(event=None):
         chat_display.insert(tk.END, f"Bot: {response}\n")
         user_entry.delete(0, tk.END)
 
+
 root = tk.Tk()
 root.title("Chatbot")
+root.geometry("500x600")
+root.configure(bg="#2c2f33")
 
-chat_display = scrolledtext.ScrolledText(root, wrap=tk.WORD)
+
+style = ttk.Style()
+style.configure("TButton", font=("Arial", 12), padding=10)
+style.configure("TEntry", padding=5)
+style.configure("TFrame", background="#2c2f33")
+
+
+chat_display = scrolledtext.ScrolledText(root, wrap=tk.WORD, state=tk.DISABLED, font=("Arial", 12), bg="#23272a", fg="white")
 chat_display.pack(padx=10, pady=10, fill=tk.BOTH, expand=True)
+chat_display.tag_config("user_message", foreground="#00ffcc")
 
-user_entry = tk.Entry(root, width=100)
-user_entry.pack(padx=10, pady=10, fill=tk.X, expand=True)
-user_entry.bind("<Return>", send_message)  # Bind the Enter key to send_message
+input_frame = ttk.Frame(root)
+input_frame.pack(pady=10, fill=tk.X, padx=10)
 
-send_button = tk.Button(root, text="Send", command=send_message)
-send_button.pack(padx=10, pady=10)
+user_entry = ttk.Entry(input_frame, font=("Arial", 12))
+user_entry.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(0, 10))
+user_entry.bind("<Return>", send_message)
+send_button = ttk.Button(input_frame, text="Send", command=send_message)
+send_button.pack(side=tk.RIGHT)
 
 root.mainloop()
