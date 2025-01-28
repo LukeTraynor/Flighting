@@ -7,6 +7,8 @@ import re
 import json
 import os
 from deep_translator import GoogleTranslator
+import tkinter as tk
+from tkinter import scrolledtext
 
 # Load spaCy model
 nlp = spacy.load('en_core_web_sm')
@@ -242,14 +244,30 @@ def chatbot_response(user_input):
         log_response(user_input, response)
         return response
 
-# Looping the chat
-while True:
-    user_input = input("You: ")
+# GUI setup
+def send_message(event=None):
+    user_input = user_entry.get()
     if user_input.lower() == 'exit':
-        print("Bot: Goodbye! Have a great day!")
-        break
+        root.quit()
     elif not user_input.strip():
-        print("Bot: Please enter something.")
-        continue
-    response = chatbot_response(user_input)
-    print(f"Bot: {response}")
+        chat_display.insert(tk.END, "Bot: Please enter something.\n")
+    else:
+        chat_display.insert(tk.END, f"You: {user_input}\n")
+        response = chatbot_response(user_input)
+        chat_display.insert(tk.END, f"Bot: {response}\n")
+        user_entry.delete(0, tk.END)
+
+root = tk.Tk()
+root.title("Chatbot")
+
+chat_display = scrolledtext.ScrolledText(root, wrap=tk.WORD)
+chat_display.pack(padx=10, pady=10, fill=tk.BOTH, expand=True)
+
+user_entry = tk.Entry(root, width=100)
+user_entry.pack(padx=10, pady=10, fill=tk.X, expand=True)
+user_entry.bind("<Return>", send_message)  # Bind the Enter key to send_message
+
+send_button = tk.Button(root, text="Send", command=send_message)
+send_button.pack(padx=10, pady=10)
+
+root.mainloop()
