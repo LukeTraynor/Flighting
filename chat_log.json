@@ -62,5 +62,89 @@
     {
         "user_input": "neither am i",
         "bot_response": "I'm not either."
+    },
+    {
+        "user_input": "hello",
+        "bot_response": "Hello! :D"
+    },
+    {
+        "user_input": "how are you",
+        "bot_response": "I'm good, how are you?"
+    },
+    {
+        "user_input": "im great",
+        "bot_response": "I'm great too"
+    },
+    {
+        "user_input": "what do you know about me",
+        "bot_response": "I know you're a good guy."
+    },
+    {
+        "user_input": "i love pizza",
+        "bot_response": "I love lamp"
+    },
+    {
+        "user_input": "can you remember that?",
+        "bot_response": "I can't remember it, but I can remember that I was in the middle of a conversation about it."
+    },
+    {
+        "user_input": "what did i just say",
+        "bot_response": "I think you said that you were going to do a video on the new map."
+    },
+    {
+        "user_input": "can you translate im running to the store do you need anything into french?",
+        "bot_response": "I'm not sure what you're asking."
+    },
+    {
+        "user_input": "translate hello i am luke into french",
+        "bot_response": "Bonjour, je suis Luke"
+    },
+    {
+        "user_input": "translate im just running to the store in french",
+        "bot_response": "I'm just running to the store in English"
+    },
+    {
+        "user_input": "translate im just running to the store into french",
+        "bot_response": "I'm just running to the store to buy a new car."
+    },
+    {
+        "user_input": "search for arsenal",
+        "bot_response": "API key or search engine ID is not set."
+    },
+    {
+        "user_input": "search for liverool fc",
+        "bot_response": "The official Liverpool FC website. The only place to visit for all your LFC news, videos, history and match information. r/LiverpoolFC: A community for Liverpool FC supporters to discuss the team, scores, fixtures, predictions, and the latest news."
+    },
+    {
+        "user_input": "translate i love women into latin",
+        "bot_response": "i mulieres in"
+    },
+    {
+        "user_input": "impressive",
+        "bot_response": "I'm not sure if you're being sarcastic or not, but I'm going to assume you're being sarcastic."
+    },
+    {
+        "user_input": "what is my name",
+        "bot_response": "I don't know what my name is yet."
+    },
+    {
+        "user_input": "my name is luke",
+        "bot_response": "Nice to meet you, luke!"
+    },
+    {
+        "user_input": "what is my name",
+        "bot_response": "I don't know what my name is yet."
+    },
+    {
+        "user_input": "remember my name?",
+        "bot_response": "Your name is luke."
+    },
+    {
+        "user_input": "my favourite food is pizza",
+        "bot_response": "I'm a fan of pizza too!"
+    },
+    {
+        "user_input": "remember my favourite food?",
+        "bot_response": "I don't know what that is."
     }
 ]

@@ -80,30 +80,6 @@ def forget_all_memories():
     cursor.execute('DELETE FROM memory')
     conn.commit()
 
-# Function to generate chatbot response using memory
-def chatbot_response(user_input):
-    name = retrieve_memory("name")
-    
-    if name and ("my name" not in user_input.lower()):  
-        user_input = f"{name}, " + user_input  # Personalize response
-    
-    # Example response logic (expand based on your AI model)
-    if "remember" in user_input.lower():
-        key_value = user_input.replace("remember that ", "").split(" is ")
-        if len(key_value) == 2:
-            append_memory(key_value[0].strip(), key_value[1].strip())
-            return "Got it! I'll remember that."
-    elif "forget" in user_input.lower():
-        key = user_input.replace("forget ", "").strip()
-        if key == "everything":
-            forget_all_memories()
-            return "I've forgotten everything."
-        forget_memory(key)
-        return f"I’ve forgotten {key}."
-    elif "what do you remember" in user_input.lower():
-        return retrieve_all_memories()
-    
-    return "I'm still learning!"
 
 def log_response(user_input, bot_response):
     log_entry = {"user_input": user_input, "bot_response": bot_response}
@@ -121,7 +97,6 @@ def log_response(user_input, bot_response):
     else:
         with open(chat_log_file, 'w', encoding='utf-8') as file:
             json.dump([log_entry], file, indent=4)
-
 
 def solve_math_expression(expression):
     try:
@@ -154,8 +129,8 @@ summarizer = pipeline("summarization", model="facebook/bart-large-cnn", framewor
 
 def get_search_results(query):
     """Get search results from Google Custom Search API and summarize."""
-    api_key = os.getenv('AIzaSyDg3raBDHsYYgzUt96U40z-x5EL502CTLs')
-    search_engine_id = os.getenv('c0c21f9a67e4e4474')
+    api_key = ('AIzaSyDg3raBDHsYYgzUt96U40z-x5EL502CTLs')
+    search_engine_id = ('c0c21f9a67e4e4474')
     if not api_key or not search_engine_id:
         return "API key or search engine ID is not set."
     
@@ -211,6 +186,7 @@ def chatbot_response(user_input):
 
     if chatbot is None:
         return "Chatbot model is not available."
+    
     try:
         # Check if the user is providing their name
         if "my name is" in user_input.lower():
@@ -275,14 +251,14 @@ def chatbot_response(user_input):
                     log_response(user_input, response)
                     return response
 
-        # Encoding the user input with attention_mask
+        # Generate a response using the DialoGPT model
         input_ids = tokenizer.encode(user_input + tokenizer.eos_token, return_tensors='pt')
         
         # Create attention mask (1 for actual tokens, 0 for padding tokens)
-        attention_mask = torch.ones(input_ids.shape, dtype=torch.long)  # Create a tensor of ones
+        attention_mask = torch.ones(input_ids.shape, dtype=torch.long)
         attention_mask[input_ids == tokenizer.pad_token_id] = 0  # Set padding tokens to 0
 
-        # Generating a response with the chatbot
+        # Generate a response with the chatbot
         chat_history_ids = model.generate(input_ids, attention_mask=attention_mask, max_length=1000, pad_token_id=tokenizer.eos_token_id)
         
         # Decode the response
@@ -296,6 +272,7 @@ def chatbot_response(user_input):
         response = "Sorry, I couldn't process that."
         log_response(user_input, response)
         return response
+
 
 def send_message(event=None):
     user_input = user_entry.get()
