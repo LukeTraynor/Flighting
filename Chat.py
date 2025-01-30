@@ -11,6 +11,8 @@ import tkinter as tk
 from tkinter import ttk, scrolledtext
 import sqlite3
 
+response_log_file = "chatbot_memory.db"
+
 # Load spaCy model
 nlp = spacy.load('en_core_web_sm')
 
@@ -40,21 +42,25 @@ def retrieve_memory(key):
     result = cursor.fetchone()
     return result[0] if result else None
 
+chat_log_file = "chat_log.json"
+
 def log_response(user_input, bot_response):
     log_entry = {"user_input": user_input, "bot_response": bot_response}
-    if os.path.exists(response_log_file):
-        with open(response_log_file, 'r+') as file:
-            try:
-                data = json.load(file)
-                data.append(log_entry)
-                file.seek(0)
-                json.dump(data, file)
-            except json.JSONDecodeError:
-                file.seek(0)
-                json.dump([log_entry], file)
+    
+    if os.path.exists(chat_log_file):
+        try:
+            with open(chat_log_file, 'r+', encoding='utf-8') as file:
+                data = json.load(file)  # Load existing log
+                data.append(log_entry)  # Append new entry
+                file.seek(0)  # Move cursor to beginning
+                json.dump(data, file, indent=4)  # Write updated log
+        except (json.JSONDecodeError, UnicodeDecodeError):  
+            with open(chat_log_file, 'w', encoding='utf-8') as file:
+                json.dump([log_entry], file, indent=4)
     else:
-        with open(response_log_file, 'w') as file:
-            json.dump([log_entry], file)
+        with open(chat_log_file, 'w', encoding='utf-8') as file:
+            json.dump([log_entry], file, indent=4)
+
 
 def solve_math_expression(expression):
     try:

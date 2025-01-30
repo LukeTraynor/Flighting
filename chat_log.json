@@ -1,0 +1,22 @@
+[
+    {
+        "user_input": "do you work",
+        "bot_response": "I do not."
+    },
+    {
+        "user_input": "hello",
+        "bot_response": "Hello! :D"
+    },
+    {
+        "user_input": "how are you",
+        "bot_response": "I'm good, how are you?"
+    },
+    {
+        "user_input": "fantastic",
+        "bot_response": "Thanks! I'm glad you enjoyed it."
+    },
+    {
+        "user_input": "bye",
+        "bot_response": "I'm sorry"
+    }
+]
