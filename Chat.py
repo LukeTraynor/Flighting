@@ -9,6 +9,7 @@ import os
 from deep_translator import GoogleTranslator
 import tkinter as tk
 from tkinter import ttk, scrolledtext
+import sqlite3
 
 # Load spaCy model
 nlp = spacy.load('en_core_web_sm')
@@ -24,24 +25,20 @@ except Exception as e:
     print(f"Failed to load chatbot model: {e}")
     model, tokenizer, chatbot = None, None, None
 
-# Memory storage
-memory_file = 'memory.json'
-response_log_file = 'response.json'
+# Initializing SQLite database
+conn = sqlite3.connect('chatbot_memory.db')
+cursor = conn.cursor()
+cursor.execute('''CREATE TABLE IF NOT EXISTS memory (key TEXT PRIMARY KEY, value TEXT)''')
+conn.commit()
 
-def load_memory():
-    if os.path.exists(memory_file):
-        with open(memory_file, 'r') as file:
-            try:
-                content = file.read().strip()
-                if content:
-                    return json.loads(content)
-            except json.JSONDecodeError:
-                return {}
-    return {}
+def update_memory(key, value):
+    cursor.execute('''INSERT OR REPLACE INTO memory (key, value) VALUES (?, ?)''', (key, value))
+    conn.commit()
 
-def save_memory():
-    with open(memory_file, 'w') as file:
-        json.dump(memory, file)
+def retrieve_memory(key):
+    cursor.execute('''SELECT value FROM memory WHERE key = ?''', (key,))
+    result = cursor.fetchone()
+    return result[0] if result else None
 
 def log_response(user_input, bot_response):
     log_entry = {"user_input": user_input, "bot_response": bot_response}
@@ -59,8 +56,6 @@ def log_response(user_input, bot_response):
         with open(response_log_file, 'w') as file:
             json.dump([log_entry], file)
 
-memory = load_memory()
-
 def solve_math_expression(expression):
     try:
         # Use sympy to parse and solve the math expression
@@ -68,15 +63,6 @@ def solve_math_expression(expression):
         return str(result)
     except Exception as e:
         return f"Error in math computation: {e}"
-
-def update_memory(key, value):
-    # Save key-value pairs to memory
-    memory[key] = value
-    save_memory()
-
-def retrieve_memory(key):
-    # Retrieve information from memory
-    return memory.get(key, None)
 
 def replace_words_with_symbols(expression):
     expression = expression.lower()
