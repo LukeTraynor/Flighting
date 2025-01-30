@@ -12,6 +12,7 @@ from tkinter import ttk, scrolledtext
 import sqlite3
 
 response_log_file = "chatbot_memory.db"
+chat_log_file = "chat_log.json"
 
 # Load spaCy model
 nlp = spacy.load('en_core_web_sm')
@@ -30,19 +31,79 @@ except Exception as e:
 # Initializing SQLite database
 conn = sqlite3.connect('chatbot_memory.db')
 cursor = conn.cursor()
-cursor.execute('''CREATE TABLE IF NOT EXISTS memory (key TEXT PRIMARY KEY, value TEXT)''')
+
+# Create memory table if it doesn't exist
+cursor.execute('''
+    CREATE TABLE IF NOT EXISTS memory (
+        key TEXT PRIMARY KEY,
+        value TEXT,
+        timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
+    )
+''')
 conn.commit()
 
+# Function to store or update memory
 def update_memory(key, value):
-    cursor.execute('''INSERT OR REPLACE INTO memory (key, value) VALUES (?, ?)''', (key, value))
+    cursor.execute('INSERT INTO memory (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = ?;', (key, value, value))
     conn.commit()
 
+# Function to retrieve memory
 def retrieve_memory(key):
-    cursor.execute('''SELECT value FROM memory WHERE key = ?''', (key,))
+    cursor.execute('SELECT value FROM memory WHERE key = ?', (key,))
     result = cursor.fetchone()
     return result[0] if result else None
 
-chat_log_file = "chat_log.json"
+# Function to retrieve all stored memories
+def retrieve_all_memories():
+    cursor.execute('SELECT key, value FROM memory')
+    rows = cursor.fetchall()
+    if rows:
+        return ", ".join([f"{key}: {value}" for key, value in rows])
+    return "I don't remember anything yet."
+
+# Function to append data instead of overwriting
+def append_memory(key, new_info):
+    existing_value = retrieve_memory(key)
+    if existing_value:
+        new_value = existing_value + " " + new_info
+    else:
+        new_value = new_info
+    update_memory(key, new_value)
+
+# Function to forget a specific memory
+def forget_memory(key):
+    cursor.execute('DELETE FROM memory WHERE key = ?', (key,))
+    conn.commit()
+
+# Function to delete all memories
+def forget_all_memories():
+    cursor.execute('DELETE FROM memory')
+    conn.commit()
+
+# Function to generate chatbot response using memory
+def chatbot_response(user_input):
+    name = retrieve_memory("name")
+    
+    if name and ("my name" not in user_input.lower()):  
+        user_input = f"{name}, " + user_input  # Personalize response
+    
+    # Example response logic (expand based on your AI model)
+    if "remember" in user_input.lower():
+        key_value = user_input.replace("remember that ", "").split(" is ")
+        if len(key_value) == 2:
+            append_memory(key_value[0].strip(), key_value[1].strip())
+            return "Got it! I'll remember that."
+    elif "forget" in user_input.lower():
+        key = user_input.replace("forget ", "").strip()
+        if key == "everything":
+            forget_all_memories()
+            return "I've forgotten everything."
+        forget_memory(key)
+        return f"I’ve forgotten {key}."
+    elif "what do you remember" in user_input.lower():
+        return retrieve_all_memories()
+    
+    return "I'm still learning!"
 
 def log_response(user_input, bot_response):
     log_entry = {"user_input": user_input, "bot_response": bot_response}

@@ -18,5 +18,49 @@
     {
         "user_input": "bye",
         "bot_response": "I'm sorry"
+    },
+    {
+        "user_input": "hey",
+        "bot_response": "Hey, how's it going?"
+    },
+    {
+        "user_input": "good how are you",
+        "bot_response": "I'm good, how are you?"
+    },
+    {
+        "user_input": "im great",
+        "bot_response": "I'm great too"
+    },
+    {
+        "user_input": "i love pizza",
+        "bot_response": "I love lamp"
+    },
+    {
+        "user_input": "what do i love?",
+        "bot_response": "The fact that you can't spell."
+    },
+    {
+        "user_input": "translate i hate you into french",
+        "bot_response": "je te d\u00e9teste"
+    },
+    {
+        "user_input": "what do you know about me",
+        "bot_response": "I know you're a good guy."
+    },
+    {
+        "user_input": "what else",
+        "bot_response": "I'm not sure, but I think it's a good idea to have a list of all the things you can do with the game."
+    },
+    {
+        "user_input": "hello",
+        "bot_response": "Hello! :D"
+    },
+    {
+        "user_input": "ive connected you to a database",
+        "bot_response": "I'm not seeing you on the list."
+    },
+    {
+        "user_input": "neither am i",
+        "bot_response": "I'm not either."
     }
 ]
