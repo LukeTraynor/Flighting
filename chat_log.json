@@ -146,5 +146,17 @@
     {
         "user_input": "remember my favourite food?",
         "bot_response": "I don't know what that is."
+    },
+    {
+        "user_input": "hi",
+        "bot_response": "Hey! :D"
+    },
+    {
+        "user_input": "what is my name?",
+        "bot_response": "I don't know what my name? is yet."
+    },
+    {
+        "user_input": "remember my name?",
+        "bot_response": "Your name is luke."
     }
 ]

@@ -42,61 +42,33 @@ cursor.execute('''
 ''')
 conn.commit()
 
-# Function to store or update memory
 def update_memory(key, value):
-    cursor.execute('INSERT INTO memory (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = ?;', (key, value, value))
+    print(f"Updating memory: {key} = {value}")
+    cursor.execute('''INSERT OR REPLACE INTO memory (key, value) VALUES (?, ?)''', (key, value))
     conn.commit()
 
-# Function to retrieve memory
 def retrieve_memory(key):
-    cursor.execute('SELECT value FROM memory WHERE key = ?', (key,))
+    print(f"Retrieving memory for key: {key}")
+    cursor.execute('''SELECT value FROM memory WHERE key = ?''', (key,))
     result = cursor.fetchone()
+    print(f"Retrieved value: {result[0] if result else None}")
     return result[0] if result else None
-
-# Function to retrieve all stored memories
-def retrieve_all_memories():
-    cursor.execute('SELECT key, value FROM memory')
-    rows = cursor.fetchall()
-    if rows:
-        return ", ".join([f"{key}: {value}" for key, value in rows])
-    return "I don't remember anything yet."
-
-# Function to append data instead of overwriting
-def append_memory(key, new_info):
-    existing_value = retrieve_memory(key)
-    if existing_value:
-        new_value = existing_value + " " + new_info
-    else:
-        new_value = new_info
-    update_memory(key, new_value)
-
-# Function to forget a specific memory
-def forget_memory(key):
-    cursor.execute('DELETE FROM memory WHERE key = ?', (key,))
-    conn.commit()
-
-# Function to delete all memories
-def forget_all_memories():
-    cursor.execute('DELETE FROM memory')
-    conn.commit()
-
 
 def log_response(user_input, bot_response):
     log_entry = {"user_input": user_input, "bot_response": bot_response}
-    
-    if os.path.exists(chat_log_file):
-        try:
-            with open(chat_log_file, 'r+', encoding='utf-8') as file:
-                data = json.load(file)  # Load existing log
-                data.append(log_entry)  # Append new entry
-                file.seek(0)  # Move cursor to beginning
-                json.dump(data, file, indent=4)  # Write updated log
-        except (json.JSONDecodeError, UnicodeDecodeError):  
-            with open(chat_log_file, 'w', encoding='utf-8') as file:
-                json.dump([log_entry], file, indent=4)
+    if os.path.exists(response_log_file):
+        with open(response_log_file, 'r+') as file:
+            try:
+                data = json.load(file)
+                data.append(log_entry)
+                file.seek(0)
+                json.dump(data, file)
+            except json.JSONDecodeError:
+                file.seek(0)
+                json.dump([log_entry], file)
     else:
-        with open(chat_log_file, 'w', encoding='utf-8') as file:
-            json.dump([log_entry], file, indent=4)
+        with open(response_log_file, 'w') as file:
+            json.dump([log_entry], file)
 
 def solve_math_expression(expression):
     try:
@@ -186,7 +158,6 @@ def chatbot_response(user_input):
 
     if chatbot is None:
         return "Chatbot model is not available."
-    
     try:
         # Check if the user is providing their name
         if "my name is" in user_input.lower():
@@ -251,14 +222,30 @@ def chatbot_response(user_input):
                     log_response(user_input, response)
                     return response
 
-        # Generate a response using the DialoGPT model
+        # Check if the user is providing their favorite color
+        if "my favorite color is" in user_input.lower():
+            color = user_input.split("my favorite color is")[-1].strip()
+            update_memory("favorite_color", color)
+            response = f"Got it! Your favorite color is {color}."
+            log_response(user_input, response)
+            return response
+
+        # Check if the user is providing their location
+        if "i live in" in user_input.lower():
+            location = user_input.split("i live in")[-1].strip()
+            update_memory("location", location)
+            response = f"Got it! You live in {location}."
+            log_response(user_input, response)
+            return response
+
+        # Encoding the user input with attention_mask
         input_ids = tokenizer.encode(user_input + tokenizer.eos_token, return_tensors='pt')
         
         # Create attention mask (1 for actual tokens, 0 for padding tokens)
-        attention_mask = torch.ones(input_ids.shape, dtype=torch.long)
+        attention_mask = torch.ones(input_ids.shape, dtype=torch.long)  # Create a tensor of ones
         attention_mask[input_ids == tokenizer.pad_token_id] = 0  # Set padding tokens to 0
 
-        # Generate a response with the chatbot
+        # Generating a response with the chatbot
         chat_history_ids = model.generate(input_ids, attention_mask=attention_mask, max_length=1000, pad_token_id=tokenizer.eos_token_id)
         
         # Decode the response
