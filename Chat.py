@@ -1,3 +1,4 @@
+import os
 import requests
 import spacy
 from transformers import AutoModelForCausalLM, AutoTokenizer, pipeline
@@ -5,14 +6,13 @@ import torch
 import sympy as sp
 import re
 import json
-import os
 from deep_translator import GoogleTranslator
 import tkinter as tk
 from tkinter import ttk, scrolledtext
 import sqlite3
+from collections import deque
 
-response_log_file = "chatbot_memory.db"
-chat_log_file = "chat_log.json"
+response_log_file = "response_log.json"
 
 # Load spaCy model
 nlp = spacy.load('en_core_web_sm')
@@ -28,7 +28,7 @@ except Exception as e:
     print(f"Failed to load chatbot model: {e}")
     model, tokenizer, chatbot = None, None, None
 
-# Initializing SQLite database
+# Initialize SQLite database
 conn = sqlite3.connect('chatbot_memory.db')
 cursor = conn.cursor()
 
@@ -57,18 +57,21 @@ def retrieve_memory(key):
 def log_response(user_input, bot_response):
     log_entry = {"user_input": user_input, "bot_response": bot_response}
     if os.path.exists(response_log_file):
-        with open(response_log_file, 'r+') as file:
-            try:
-                data = json.load(file)
+        try:
+            with open(response_log_file, 'r+', encoding='utf-8') as file:
+                try:
+                    data = json.load(file)
+                except json.JSONDecodeError:
+                    data = []
                 data.append(log_entry)
                 file.seek(0)
-                json.dump(data, file)
-            except json.JSONDecodeError:
-                file.seek(0)
-                json.dump([log_entry], file)
+                json.dump(data, file, ensure_ascii=False, indent=4)
+        except UnicodeDecodeError:
+            with open(response_log_file, 'w', encoding='utf-8') as file:
+                json.dump([log_entry], file, ensure_ascii=False, indent=4)
     else:
-        with open(response_log_file, 'w') as file:
-            json.dump([log_entry], file)
+        with open(response_log_file, 'w', encoding='utf-8') as file:
+            json.dump([log_entry], file, ensure_ascii=False, indent=4)
 
 def solve_math_expression(expression):
     try:
@@ -149,6 +152,9 @@ def translate_text(text, target_language):
         return translated
     except Exception as e:
         return f"An error occurred while translating: {e}"
+
+# Initialize chat history
+chat_history = deque(maxlen=5)
 
 def chatbot_response(user_input):
     # Extract and solve math expression if present
@@ -238,8 +244,14 @@ def chatbot_response(user_input):
             log_response(user_input, response)
             return response
 
+        # Add user input to chat history
+        chat_history.append(f"You: {user_input}")
+
+        # Create prompt with chat history
+        prompt = "\n".join(chat_history) + f"\nYou: {user_input}\nBot:"
+
         # Encoding the user input with attention_mask
-        input_ids = tokenizer.encode(user_input + tokenizer.eos_token, return_tensors='pt')
+        input_ids = tokenizer.encode(prompt + tokenizer.eos_token, return_tensors='pt')
         
         # Create attention mask (1 for actual tokens, 0 for padding tokens)
         attention_mask = torch.ones(input_ids.shape, dtype=torch.long)  # Create a tensor of ones
@@ -251,6 +263,9 @@ def chatbot_response(user_input):
         # Decode the response
         chatbot_response = tokenizer.decode(chat_history_ids[:, input_ids.shape[-1]:][0], skip_special_tokens=True)
         
+        # Add bot response to chat history
+        chat_history.append(f"Bot: {chatbot_response}")
+
         # Log the response
         log_response(user_input, chatbot_response)
         

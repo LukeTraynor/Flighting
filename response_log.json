@@ -1,0 +1,38 @@
+[
+    {
+        "user_input": "hello",
+        "bot_response": "HelloContingencyBot : helloContingencyBot : helloContingencyBot : helloContingencyBot : helloContingencyBot : helloContingencyBot : helloContingencyBot : helloContingencyBot : helloContingencyBot : helloContingencyBot : helloContingencyBot : helloContingencyBot : helloContingencyBot : helloContingencyBot : helloContingencyBot : helloContingencyBot : helloContingencyBot : helloContingencyBot : helloContingencyBot : helloConting"
+    },
+    {
+        "user_input": "woah",
+        "bot_response": "I"
+    },
+    {
+        "user_input": "hello there?",
+        "bot_response": ""
+    },
+    {
+        "user_input": "why no talk",
+        "bot_response": "I'm not a bot, I'm a human."
+    },
+    {
+        "user_input": "hello",
+        "bot_response": "You : Hello?"
+    },
+    {
+        "user_input": "you work now",
+        "bot_response": "You : Hello?"
+    },
+    {
+        "user_input": "fixed yet?",
+        "bot_response": "I'm not sure what you're trying to say."
+    },
+    {
+        "user_input": "ooohhh oo",
+        "bot_response": "I'm not sure what you're trying to say."
+    },
+    {
+        "user_input": "hello",
+        "bot_response": "I'm not sure what you're trying to say."
+    }
+]
