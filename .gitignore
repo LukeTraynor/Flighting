@@ -2,3 +2,4 @@
 myenv/
 venv/
 test_deep_translator.py
+.env

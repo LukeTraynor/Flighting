@@ -11,7 +11,10 @@ import tkinter as tk
 from tkinter import ttk, scrolledtext
 import sqlite3
 from collections import deque
+from dotenv import load_dotenv
 
+
+load_dotenv()
 response_log_file = "response_log.json"
 
 # Load spaCy model
@@ -104,8 +107,8 @@ summarizer = pipeline("summarization", model="facebook/bart-large-cnn", framewor
 
 def get_search_results(query):
     """Get search results from Google Custom Search API and summarize."""
-    api_key = ('AIzaSyDg3raBDHsYYgzUt96U40z-x5EL502CTLs')
-    search_engine_id = ('c0c21f9a67e4e4474')
+    api_key = os.getenv('GOOGLE_API_KEY')
+    search_engine_id = os.getenv('SEARCH_ENGINE_ID')
     if not api_key or not search_engine_id:
         return "API key or search engine ID is not set."
     
@@ -157,6 +160,7 @@ def translate_text(text, target_language):
 chat_history = deque(maxlen=5)
 
 def chatbot_response(user_input):
+    print(f"User input: {user_input}")
     # Extract and solve math expression if present
     math_expression = extract_math_expression(user_input)
     if math_expression:
@@ -247,8 +251,8 @@ def chatbot_response(user_input):
         # Add user input to chat history
         chat_history.append(f"You: {user_input}")
 
-        # Create prompt with chat history
-        prompt = "\n".join(chat_history) + f"\nYou: {user_input}\nBot:"
+        # Create prompt with chat history (only user messages)
+        prompt = "\n".join([msg for msg in chat_history if msg.startswith("You:")]) + f"\nYou: {user_input}\nBot:"
 
         # Encoding the user input with attention_mask
         input_ids = tokenizer.encode(prompt + tokenizer.eos_token, return_tensors='pt')
@@ -274,7 +278,6 @@ def chatbot_response(user_input):
         response = "Sorry, I couldn't process that."
         log_response(user_input, response)
         return response
-
 
 def send_message(event=None):
     user_input = user_entry.get()
