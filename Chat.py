@@ -11,10 +11,7 @@ import tkinter as tk
 from tkinter import ttk, scrolledtext
 import sqlite3
 from collections import deque
-from dotenv import load_dotenv
 
-
-load_dotenv()
 response_log_file = "response_log.json"
 
 # Load spaCy model
@@ -103,8 +100,6 @@ def extract_math_expression(user_input):
 
 summarizer = pipeline("summarization", model="facebook/bart-large-cnn", framework="pt")
 
-
-
 def get_search_results(query):
     """Get search results from Google Custom Search API and summarize."""
     api_key = os.getenv('GOOGLE_API_KEY')
@@ -157,70 +152,21 @@ def translate_text(text, target_language):
         return f"An error occurred while translating: {e}"
 
 # Initialize chat history
-chat_history = deque(maxlen=5)
+chat_history = deque(maxlen=10)
 
 def chatbot_response(user_input):
-    print(f"User input: {user_input}")
-    # Extract and solve math expression if present
-    math_expression = extract_math_expression(user_input)
-    if math_expression:
-        return solve_math_expression(math_expression)
-
+    print(f"Processing input: {user_input}")
+    
     if chatbot is None:
         return "Chatbot model is not available."
+        
     try:
-        # Check if the user is providing their name
-        if "my name is" in user_input.lower():
-            name = user_input.split("my name is")[-1].strip()
-            update_memory("name", name)
-            response = f"Nice to meet you, {name}!"
-            log_response(user_input, response)
-            return response
+        # Handle math expressions
+        math_expression = extract_math_expression(user_input)
+        if math_expression:
+            return solve_math_expression(math_expression)
 
-        # Check for specific information requests
-        if "my name" in user_input.lower() and "is" not in user_input.lower():
-            name = retrieve_memory("name")
-            if name:
-                response = f"Your name is {name}."
-            else:
-                response = "I don't know your name yet. What is your name?"
-            log_response(user_input, response)
-            return response
-
-        # Check for other types of information
-        if "remember" in user_input.lower():
-            parts = user_input.split("remember")
-            if len(parts) > 1:
-                info = parts[1].strip()
-                key_value = info.split("is")
-                if len(key_value) == 2:
-                    key = key_value[0].strip()
-                    value = key_value[1].strip()
-                    update_memory(key, value)
-                    response = f"Got it! I'll remember that {key} is {value}."
-                    log_response(user_input, response)
-                    return response
-
-        # Check if the user is asking for remembered information
-        if "what is" in user_input.lower() and "search for" not in user_input.lower():
-            key = user_input.split("what is")[-1].strip()
-            value = retrieve_memory(key)
-            if value:
-                response = f"{key} is {value}."
-            else:
-                response = f"I don't know what {key} is yet."
-            log_response(user_input, response)
-            return response
-
-        # Check if the user is asking a factual question
-        search_phrases = ["search for", "find", "look up", "who is", "tell me about"]
-        if any(phrase in user_input.lower() for phrase in search_phrases):
-            query = parse_query_with_spacy(user_input)
-            response = get_search_results(query)
-            log_response(user_input, response)
-            return response
-
-        # Check if the user is asking for translation
+        # Handle translation
         if "translate" in user_input.lower():
             parts = user_input.split("translate")
             if len(parts) > 1:
@@ -228,56 +174,50 @@ def chatbot_response(user_input):
                 if len(text_and_language) == 2:
                     text = text_and_language[0].strip()
                     target_language = text_and_language[1].strip()
-                    response = translate_text(text, target_language)
-                    log_response(user_input, response)
-                    return response
+                    return translate_text(text, target_language)
 
-        # Check if the user is providing their favorite color
+        # Handle search queries
+        search_phrases = ["search for", "find", "look up", "who is", "tell me about"]
+        if any(phrase in user_input.lower() for phrase in search_phrases):
+            query = parse_query_with_spacy(user_input)
+            return get_search_results(query)
+
+        # Handle memory storage
         if "my favorite color is" in user_input.lower():
             color = user_input.split("my favorite color is")[-1].strip()
             update_memory("favorite_color", color)
-            response = f"Got it! Your favorite color is {color}."
-            log_response(user_input, response)
-            return response
+            return f"Got it! Your favorite color is {color}."
 
-        # Check if the user is providing their location
-        if "i live in" in user_input.lower():
-            location = user_input.split("i live in")[-1].strip()
-            update_memory("location", location)
-            response = f"Got it! You live in {location}."
-            log_response(user_input, response)
-            return response
+        # Handle memory retrieval
+        if "remember" in user_input.lower():
+            parts = user_input.split("remember")
+            if len(parts) > 1:
+                key = parts[1].strip()
+                value = retrieve_memory(key)
+                return f"Yes, {key} is {value}." if value else f"I don't remember {key}."
 
-        # Add user input to chat history
-        chat_history.append(f"You: {user_input}")
-
-        # Create prompt with chat history (only user messages)
-        prompt = "\n".join([msg for msg in chat_history if msg.startswith("You:")]) + f"\nYou: {user_input}\nBot:"
-
-        # Encoding the user input with attention_mask
-        input_ids = tokenizer.encode(prompt + tokenizer.eos_token, return_tensors='pt')
+        # Handle general conversation with DialoGPT
+        input_ids = tokenizer.encode(user_input + tokenizer.eos_token, return_tensors='pt')
+        attention_mask = torch.ones(input_ids.shape, dtype=torch.long)
         
-        # Create attention mask (1 for actual tokens, 0 for padding tokens)
-        attention_mask = torch.ones(input_ids.shape, dtype=torch.long)  # Create a tensor of ones
-        attention_mask[input_ids == tokenizer.pad_token_id] = 0  # Set padding tokens to 0
+        chat_output = model.generate(
+            input_ids,
+            max_length=50,
+            num_return_sequences=1,
+            no_repeat_ngram_size=2,
+            do_sample=True,
+            top_k=50,
+            top_p=0.95,
+            temperature=0.7,
+            pad_token_id=tokenizer.eos_token_id
+        )
+        
+        response = tokenizer.decode(chat_output[:, input_ids.shape[-1]:][0], skip_special_tokens=True)
+        return response.strip()
 
-        # Generating a response with the chatbot
-        chat_history_ids = model.generate(input_ids, attention_mask=attention_mask, max_length=1000, pad_token_id=tokenizer.eos_token_id)
-        
-        # Decode the response
-        chatbot_response = tokenizer.decode(chat_history_ids[:, input_ids.shape[-1]:][0], skip_special_tokens=True)
-        
-        # Add bot response to chat history
-        chat_history.append(f"Bot: {chatbot_response}")
-
-        # Log the response
-        log_response(user_input, chatbot_response)
-        
-        return chatbot_response
     except Exception as e:
-        response = "Sorry, I couldn't process that."
-        log_response(user_input, response)
-        return response
+        print(f"Error generating response: {e}")
+        return "I'm not sure how to respond to that."
 
 def send_message(event=None):
     user_input = user_entry.get()
@@ -296,30 +236,21 @@ def send_message(event=None):
         chat_display.see(tk.END)  # Auto-scroll to the latest message
         user_entry.delete(0, tk.END)
 
-
-
 root = tk.Tk()
 root.title("Chatbot")
 root.geometry("500x600")
 root.configure(bg="#2c2f33")
 
-
-style = ttk.Style()
-style.configure("TButton", font=("Arial", 12), padding=10)
-style.configure("TEntry", padding=5)
-style.configure("TFrame", background="#2c2f33")
-
-
 chat_display = scrolledtext.ScrolledText(root, wrap=tk.WORD, state=tk.DISABLED, font=("Arial", 12), bg="#23272a", fg="white")
 chat_display.pack(padx=10, pady=10, fill=tk.BOTH, expand=True)
-chat_display.tag_config("user_message", foreground="#00ffcc")
 
-input_frame = ttk.Frame(root)
-input_frame.pack(pady=10, fill=tk.X, padx=10)
+input_frame = tk.Frame(root)
+input_frame.pack(padx=10, pady=10, fill=tk.X, expand=True)
 
 user_entry = ttk.Entry(input_frame, font=("Arial", 12))
 user_entry.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(0, 10))
 user_entry.bind("<Return>", send_message)
+
 send_button = ttk.Button(input_frame, text="Send", command=send_message)
 send_button.pack(side=tk.RIGHT)
 
